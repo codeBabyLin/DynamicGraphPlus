@@ -89,11 +89,20 @@ trait Clauses extends Parser
         | keyword("MATCHHIS") ~ push(false)
       ) ~~ Pattern ~~ zeroOrMore(Hint, separator = WS) ~~ optional(Where) ~~ optional(At)) ~~>> (ast.MatchHistory(_, _, _, _,_))
   }
+
+  def MatchV: Rule1[ast.MatchV] = rule("MATCHV") {
+    group((
+      keyword("OPTIONAL MATCHV") ~ push(true)
+        | keyword("MATCHV") ~ push(false)
+      ) ~~ Pattern ~~ zeroOrMore(Hint, separator = WS) ~~ optional(Where) ~~ optional(Before)) ~~>> (ast.MatchV(_, _, _, _,_))
+  }
+
+
   def Match: Rule1[ast.Match] = rule("MATCH") {
     group((
       keyword("OPTIONAL MATCH") ~ push(true)
         | keyword("MATCH") ~ push(false)
-      ) ~~ Pattern ~~ zeroOrMore(Hint, separator = WS) ~~ optional(Where) ~~ optional(At)) ~~>> (ast.Match(_, _, _, _, _))
+      ) ~~ Pattern ~~ zeroOrMore(Hint, separator = WS) ~~ optional(Where) ~~ optional(At) ) ~~>> (ast.Match(_, _, _, _, _))
   }
 
   def Merge: Rule1[ast.Merge] = rule("MERGE") {
@@ -152,9 +161,7 @@ trait Clauses extends Parser
   private def Where: Rule1[Where] = rule("WHERE") {
     group(keyword("WHERE") ~~ Expression) ~~>> (ast.Where(_))
   }
-  private def At: Rule1[At] = rule("At") {
-    group(keyword("AT") ~~ "("~~Expression~~")") ~~>> (ast.At(_))
-  }
+
 
 
   def PeriodicCommitHint: Rule1[ast.PeriodicCommitHint] = rule("USING PERIODIC COMMIT")(
@@ -225,5 +232,23 @@ trait Clauses extends Parser
   private def Limit: Rule1[ast.Limit] = rule("LIMIT") {
     group(keyword("LIMIT") ~~ Expression) ~~>> (ast.Limit(_))
   }
+  private def At: Rule1[ast.At] = rule("At") {
+    group(keyword("AT") ~~Expression) ~~>> (ast.At(_))
+  }
+
+  private def Before: Rule1[ast.Before] = rule("Before") {
+    group(keyword("BEFORE") ~~Expression) ~~>> (ast.Before(_))
+  }
+  private def After: Rule1[ast.After] = rule("After") {
+    group(keyword("AFTER") ~~Expression) ~~>> (ast.After(_))
+  }
+  private def Between: Rule1[ast.Between] = rule("Between") {
+    group(keyword("BETWEEN") ~~Expression) ~~>> (ast.Between(_))
+  }
+
+  private def timeStamp = rule("timeStamp") {
+    group(Expression ~~ CommaSep ~~ Expression)
+  }
+
 }
 

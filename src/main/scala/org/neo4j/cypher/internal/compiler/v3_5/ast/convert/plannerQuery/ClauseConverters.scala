@@ -49,7 +49,7 @@ object ClauseConverters {
     case c: Foreach => addForeachToLogicalPlanInput(acc, c)
     case c: MatchHistory => addMatchHisToLogicalPlanInput(acc,c)
     case c: CreateV => addCreateVToLogicalPlanInput(acc, c)
-
+    case c: MatchV => addMatchVToLogicalPlanInput(acc,c)
     case x: UnresolvedCall => throw new IllegalArgumentException(s"$x is not expected here")
     case x => throw new InternalException(s"Received an AST-clause that has no representation the QG: $x")
   }
@@ -362,11 +362,15 @@ object ClauseConverters {
       }
     }
   }
-  private def addMatchHisToLogicalPlanInput(acc: PlannerQueryBuilder, clause: MatchHistory): PlannerQueryBuilder = {
+
+
+  private def addMatchVToLogicalPlanInput(acc: PlannerQueryBuilder, clause: MatchV): PlannerQueryBuilder = {
     val patternContent = clause.pattern.destructed
 
     val selections = asSelections(clause.where)
-
+    val version: Set[Predicate] = clause.before.
+      map(_.expression.asPredicates).
+      getOrElse(Set.empty)
     if (clause.optional) {
       acc.
         amendQueryGraph { qg => qg.withAddedOptionalMatch(
@@ -377,7 +381,8 @@ object ClauseConverters {
             patternNodes = patternContent.nodeIds.toSet,
             patternRelationships = patternContent.rels.toSet,
             hints = clause.hints,
-            shortestPathPatterns = patternContent.shortestPaths.toSet
+            shortestPathPatterns = patternContent.shortestPaths.toSet,
+            graphVersion = version
           ))
         }
     } else {
@@ -387,7 +392,40 @@ object ClauseConverters {
           addPatternNodes(patternContent.nodeIds: _*).
           addPatternRelationships(patternContent.rels).
           addHints(clause.hints).
-          addShortestPaths(patternContent.shortestPaths: _*)
+          addShortestPaths(patternContent.shortestPaths: _*).setGraphVersion(version)
+      }
+    }
+  }
+
+  private def addMatchHisToLogicalPlanInput(acc: PlannerQueryBuilder, clause: MatchHistory): PlannerQueryBuilder = {
+    val patternContent = clause.pattern.destructed
+
+    val selections = asSelections(clause.where)
+    val version: Set[Predicate] = clause.at.
+      map(_.expression.asPredicates).
+      getOrElse(Set.empty)
+    if (clause.optional) {
+      acc.
+        amendQueryGraph { qg => qg.withAddedOptionalMatch(
+          // When adding QueryGraphs for optional matches, we always start with a new one.
+          // It's either all or nothing per match clause.
+          QueryGraph(
+            selections = selections,
+            patternNodes = patternContent.nodeIds.toSet,
+            patternRelationships = patternContent.rels.toSet,
+            hints = clause.hints,
+            shortestPathPatterns = patternContent.shortestPaths.toSet,
+            graphVersion = version
+          ))
+        }
+    } else {
+      acc.amendQueryGraph {
+        qg => qg.
+          addSelections(selections).
+          addPatternNodes(patternContent.nodeIds: _*).
+          addPatternRelationships(patternContent.rels).
+          addHints(clause.hints).
+          addShortestPaths(patternContent.shortestPaths: _*).setGraphVersion(version)
       }
     }
   }

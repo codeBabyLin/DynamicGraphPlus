@@ -17,6 +17,7 @@
 package org.neo4j.cypher.internal.v3_5.parser
 
 import org.neo4j.cypher.internal.v3_5.ast
+import org.neo4j.cypher.internal.v3_5.ast.{CreateV, MatchHistory, MatchV}
 import org.parboiled.scala._
 
 trait Query extends Parser
@@ -51,6 +52,7 @@ trait Query extends Parser
       | Start
       | Match
       | MatchHistory
+      | MatchV
       | Unwind
       | Merge
       | CreateUnique

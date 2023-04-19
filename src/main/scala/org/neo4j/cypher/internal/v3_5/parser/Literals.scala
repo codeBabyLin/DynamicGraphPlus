@@ -60,7 +60,11 @@ trait Literals extends Parser
       keyword("WITH") |
       keyword("COPY") |
       keyword("AT") |
+      keyword("AFTER") |
+      keyword("BEFORE") |
+      keyword("BETWEEN") |
       keyword("MATCHHIS")|
+      keyword("MATCHV")|
       keyword("CREATEV")
   def ProcedureName: Rule1[org.neo4j.cypher.internal.v3_5.expressions.ProcedureName] =
     rule("a procedure name") { SymbolicNameString ~~>> (ast.ProcedureName(_) ) }.memoMismatches
